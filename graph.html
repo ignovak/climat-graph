@@ -38,6 +38,7 @@
                 height = 500 - margin.top - margin.bottom;
 
             // var parseDate = d3.time.format("%d-%b-%y").parse;
+            var timeRange;
 
             var x = d3.time.scale()
                 .range([0, width]);
@@ -47,6 +48,9 @@
 
             var xAxis = d3.svg.axis()
                 .scale(x)
+                .tickFormat(function(d, x) {
+                    return timeRange * (x - 8) / 8;
+                })
                 .orient("bottom");
 
             var yAxis = d3.svg.axis()
@@ -65,10 +69,17 @@
 
             d3.tsv("small.tsv", function(error, data) {
 
-                // invert time
-                var timeRange = +data[data.length - 1].time;
+                var len = data.length,
+                    factor = ~~(len / 1000) || 1;
+
+                timeRange = +data[len - 1].time;
+
+                data = data.filter(function(v, k) {
+                    return k % factor == 0;
+                });
 
                 data.forEach(function(d) {
+                    // invert time
                     d.time = timeRange - d.time;
                     d.close = +d.close;
                 });
