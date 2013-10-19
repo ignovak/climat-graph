@@ -17,9 +17,6 @@ var y = d3.scale.linear()
 
 var xAxis = d3.svg.axis()
     .scale(x)
-    .tickFormat(function(d, x) {
-        return timeRange * (x - 8) / 8;
-    })
     .orient("bottom");
 
 var yAxis = d3.svg.axis()
@@ -45,8 +42,7 @@ d3.tsv('data.tsv', function(error, data) {
     timeRange = +data[data.length - 1].time;
 
     data.forEach(function(d) {
-        // invert time
-        d.time = timeRange - d.time;
+        d.time = +d.time;
         d.close = +d.close;
     });
 
@@ -64,7 +60,7 @@ function draw(data, zoom) {
     var len = data.length,
         factor = ~~(len * zoom / 500) || 1;
 
-    data = data.slice(0, ~~(len * zoom)).filter(function(v, k) {
+    data = data.slice(~~(len * (1 - zoom))).filter(function(v, k) {
         return k % factor == 0;
     });
 
@@ -94,6 +90,7 @@ function draw(data, zoom) {
         .datum(data)
         .attr("class", "line")
         .attr("d", line);
+
 }
 
 })();
