@@ -1,0 +1,21 @@
+{
+  "name": "climat-graph",
+  "version": "0.0.0",
+  "description": "Animated graph of temperature and CO2 records",
+  "main": "main.js",
+  "scripts": {
+  },
+  "dependencies": {
+    "lodash": "2.2.x",
+    "d3": "git://github.com/mbostock/d3.git#master"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ignovak/climat-graph.git"
+  },
+  "author": "Igor Novak",
+  "license": "BSD-2-Clause",
+  "bugs": {
+    "url": "https://github.com/ignovak/climat-graph/issues"
+  }
+}
