@@ -1,7 +1,8 @@
 (function() {
 
-var margin = {top: 20, right: 20, bottom: 30, left: 50},
-    width = 960 - margin.left - margin.right,
+var root = d3.select('.graph'),
+    margin = {top: 20, right: 20, bottom: 30, left: 50},
+    width = parseInt(root.style('width')) - margin.left - margin.right,
     height = 500 - margin.top - margin.bottom;
 
 // var parseDate = d3.time.format("%d-%b-%y").parse;
@@ -30,7 +31,7 @@ var line = d3.svg.line()
     .y(function(d) { return y(d.close); })
     .interpolate('basis-open');
 
-var svg = d3.select("body").append("svg")
+var svg = root.append('svg')
     .attr("width", width + margin.left + margin.right)
     .attr("height", height + margin.top + margin.bottom)
     .append("g")

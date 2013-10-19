@@ -1,11 +1,15 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <meta charset="utf-8">
+        <title>Graph</title>
         <style>
 
             body {
+                margin: 0;
+            }
+
+            .graph {
                 font: 10px sans-serif;
 
                 display: -webkit-flex;
@@ -32,10 +36,11 @@
             }
 
         </style>
-        <style type="text/css"></style>
     </head>
     <body>
-        <input type="range" class="zoom" value="100" max="100">
+        <div class='graph'>
+            <input type="range" class="zoom" value="100" max="100">
+        </div>
         <script src="node_modules/d3/d3.js"></script>
         <script src="node_modules/lodash/lodash.js"></script>
         <script src="main.js"></script>
