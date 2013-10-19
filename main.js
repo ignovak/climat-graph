@@ -35,7 +35,7 @@ var svg = root.append('svg')
     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
 d3.select('.zoom').on('change', _.throttle(function() {
-    draw(points, this.value / this.max);
+    updateGraph(points, this.value / this.max);
 }, 100));
 
 d3.tsv('data.tsv', function(error, data) {
@@ -48,14 +48,15 @@ d3.tsv('data.tsv', function(error, data) {
 
     points = data;
 
-    draw(data, 1);
+    updateGraph(data, 1);
 });
 
 var svgX,
     svgY,
-    svgPath;
+    svgPath,
+    drawTimeout;
 
-function draw(data, zoom) {
+function updateGraph(data, zoom) {
 
     var len = data.length,
         factor = ~~(len * zoom / 500) || 1;
@@ -70,6 +71,7 @@ function draw(data, zoom) {
     svgX && svgX.remove();
     svgY && svgY.remove();
     svgPath && svgPath.remove();
+    clearTimeout(drawTimeout);
 
     svgX = svg.append("g")
         .attr("class", "x axis")
@@ -90,6 +92,18 @@ function draw(data, zoom) {
         .datum(data)
         .attr("class", "line")
         .attr("d", line);
+
+    var pathLen = svgPath.node().getTotalLength();
+    svgPath
+        .style('stroke-dasharray', pathLen + ' ' + pathLen)
+        .style('stroke-dashoffset', pathLen);
+
+    !function drawGraph() {
+        if (pathLen > 0) {
+            svgPath.style('stroke-dashoffset', pathLen -= d3.select('.speed').node().value);
+            drawTimeout = setTimeout(drawGraph, 100);
+        }
+    }();
 
 }
 
