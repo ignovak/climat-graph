@@ -40,7 +40,7 @@ d3.select('.zoom').on('change', _.throttle(function() {
     draw(points, this.value / this.max);
 }, 100));
 
-d3.tsv("small.tsv", function(error, data) {
+d3.tsv('data.tsv', function(error, data) {
     timeRange = +data[data.length - 1].time;
 
     data.forEach(function(d) {
