@@ -4,6 +4,7 @@ function Graph(root, source, params) {
     this.getStepLen = params.getStepLen || function() {
         return 100;
     };
+    this._canDraw = true;
 
     this.init(params);
 
@@ -101,10 +102,15 @@ Graph.prototype.update = function(data, zoom) {
 
     var drawGraph = function() {
         if (pathLen > 0) {
-            this.svgPath.style('stroke-dashoffset', pathLen -= this.getStepLen());
+            this._canDraw && this.svgPath.style('stroke-dashoffset', pathLen -= this.getStepLen());
             this.drawTimeout = setTimeout(drawGraph, 100);
         }
     }.bind(this);
     drawGraph();
 
+};
+
+Graph.prototype.toggleDrawing = function() {
+    this._canDraw = !this._canDraw;
+    return this._canDraw;
 };

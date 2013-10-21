@@ -48,6 +48,7 @@
     </head>
     <body>
         <div class='graph'>
+            <button class="pause">Pause</button>
             <label>Speed: <input type="range" class="speed" value="100" max="200"></label>
             <label>Zoom: <input type="range" class="zoom" value="100" max="100"></label>
         </div>
@@ -71,6 +72,10 @@
                     }
                 }
             );
+
+            d3.select('.pause').on('click', function() {
+                this.innerText = graph.toggleDrawing() ? 'Pause' : 'Continue';
+            });
 
             d3.select('.zoom').on('change', _.throttle(function() {
                 graph.update(graph.points, this.value / this.max);
