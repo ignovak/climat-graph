@@ -16,6 +16,7 @@ function Graph(root, source, params) {
 
         this.points = data;
 
+        this._buildYAxis(data);
         this.update(data, 1);
     }.bind(this));
 
@@ -25,13 +26,9 @@ Graph.prototype.init = function(params) {
 
     var margin = params.margin,
         width = params.width,
-        height = params.height;
-
-    var x = d3.scale.linear()
-        .range([0, width]);
-
-    var y = d3.scale.linear()
-        .range([height, 0]);
+        height = this.height = params.height,
+        x = this.x = d3.scale.linear().range([0, width]),
+        y = this.y = d3.scale.linear().range([height, 0]);
 
     this.xAxis = d3.svg.axis()
         .scale(x)
@@ -41,16 +38,12 @@ Graph.prototype.init = function(params) {
         .scale(y)
         .orient('left');
 
-    this.height = height;
-    this.x = x;
-    this.y = y;
-
     this.line = d3.svg.line()
         .x(function(d) { return x(d.time); })
         .y(function(d) { return y(d.close); })
         .interpolate('basis-open');
 
-    this.svg = root.append('svg')
+    this.svg = this.root.append('svg')
         .attr('width', width + margin.left + margin.right)
         .attr('height', height + margin.top + margin.bottom)
         .append('g')
@@ -68,10 +61,8 @@ Graph.prototype.update = function(data, zoom) {
     });
 
     this.x.domain(d3.extent(data, function(d) { return d.time; }));
-    this.y.domain(d3.extent(data, function(d) { return d.close; }));
 
     this.svgX && this.svgX.remove();
-    this.svgY && this.svgY.remove();
     this.svgPath && this.svgPath.remove();
     clearTimeout(this.drawTimeout);
 
@@ -79,16 +70,6 @@ Graph.prototype.update = function(data, zoom) {
         .attr("class", "x axis")
         .attr("transform", "translate(0," + this.height + ")")
         .call(this.xAxis);
-
-    this.svgY = this.svg.append("g")
-        .attr("class", "y axis")
-        .call(this.yAxis)
-        .append("text")
-        .attr("transform", "rotate(-90)")
-        .attr("y", 6)
-        .attr("dy", ".71em")
-        .style("text-anchor", "end")
-        .text("Temperature delta, C");
 
     this.svgPath = this.svg.append("path")
         .datum(data)
@@ -113,4 +94,21 @@ Graph.prototype.update = function(data, zoom) {
 Graph.prototype.toggleDrawing = function() {
     this._canDraw = !this._canDraw;
     return this._canDraw;
+};
+
+Graph.prototype.destruct = function() {
+    this.root.node().innerHTML = '';
+};
+
+Graph.prototype._buildYAxis = function(data) {
+    this.y.domain(d3.extent(data, function(d) { return d.close; }));
+    this.svg.append("g")
+        .attr("class", "y axis")
+        .call(this.yAxis)
+        .append("text")
+        .attr("transform", "rotate(-90)")
+        .attr("y", 6)
+        .attr("dy", ".71em")
+        .style("text-anchor", "end")
+        .text("Temperature delta, C");
 };
