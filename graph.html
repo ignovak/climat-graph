@@ -31,7 +31,6 @@
 
             .line {
                 fill: none;
-                stroke: steelblue;
                 stroke-width: 1.5px;
             }
 
@@ -67,6 +66,7 @@
                     margin: margin,
                     width: parseInt(root.style('width')) - margin.left - margin.right,
                     height: 500 - margin.top - margin.bottom,
+                    color: 'steelblue',
                     getStepLen: function() {
                         return speedNode.value;
                     }

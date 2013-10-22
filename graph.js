@@ -1,6 +1,7 @@
 function Graph(root, source, params) {
 
     this.root = root;
+    this.color = params.color;
     this.getStepLen = params.getStepLen || function() {
         return 100;
     };
@@ -8,7 +9,7 @@ function Graph(root, source, params) {
 
     this.init(params);
 
-    d3.tsv(source, function(error, data) {
+    d3.tsv(source, type, function(error, data) {
         data.forEach(function(d) {
             d.time = +d.time;
             d.close = +d.close;
@@ -20,6 +21,11 @@ function Graph(root, source, params) {
         this.update(data, 1);
     }.bind(this));
 
+    function type(d) {
+        d.time = +d.time;
+        d.close = +d.close;
+        return d;
+    }
 }
 
 Graph.prototype.init = function(params) {
@@ -73,6 +79,7 @@ Graph.prototype.update = function(data, zoom) {
 
     this.svgPath = this.svg.append("path")
         .datum(data)
+        .attr('stroke', this.color)
         .attr("class", "line")
         .attr("d", this.line);
 
@@ -83,7 +90,8 @@ Graph.prototype.update = function(data, zoom) {
 
     var drawGraph = function() {
         if (pathLen > 0) {
-            this._canDraw && this.svgPath.style('stroke-dashoffset', pathLen -= this.getStepLen());
+            pathLen -= this.getStepLen();
+            this._canDraw && this.svgPath.style('stroke-dashoffset', pathLen > 0 ? pathLen : 0);
             this.drawTimeout = setTimeout(drawGraph, 100);
         }
     }.bind(this);
