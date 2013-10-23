@@ -1,7 +1,8 @@
-climat-graph
+climate-graph
 ============
 
 Animated graph of temperature and CO2 records
+
 http://inovak.site44.com/graph.html
 
 Usage:
@@ -16,3 +17,5 @@ You also need the `temparature.tsv` and `co2.tsv` files with data for graph:
 wget http://inovak.site44.com/temperature.tsv
 wget http://inovak.site44.com/co2.tsv
 ```
+
+Pie chart of factors affecting the climate: http://inovak.site44.com/pie.html.
