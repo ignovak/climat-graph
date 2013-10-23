@@ -8,6 +8,7 @@ function Graph(root, params, options) {
         return 100;
     };
     this._canDraw = true;
+    this.zoom = _.once(this.zoom);
 
     this.init(options);
 
@@ -15,6 +16,7 @@ function Graph(root, params, options) {
         d3.tsv(graph.source, type, function(error, data) {
 
             graph.data = data;
+            // TODO: hardcode
             if (graph.source === 'data.tsv')
                 graph.data = data.filter(function(v, k) {
                     return k % 6 === 0;
@@ -39,22 +41,7 @@ Graph.prototype.init = function(options) {
 
     var margin = options.margin,
         width = this.width = options.width,
-        height = this.height = options.height,
-        x,
-        y = this.y = d3.scale.linear().range([height, 0]);
-
-    this.params.forEach(function(graph) {
-        x = graph.x = d3.scale.linear().range([0, width]);
-        graph.y = d3.scale.linear().range([height, 0]);
-
-        graph.line = d3.svg.line()
-            .x(function(d) { return graph.x(d.time); })
-            .y(function(d) { return graph.y(d.close); })
-            .interpolate('basis-open');
-
-    });
-
-    this.xAxis = d3.svg.axis().scale(this.params[0].x).orient('bottom');
+        height = this.height = options.height;
 
     this.svg = this.root.append('svg')
         .attr('width', width + margin.left + margin.right)
@@ -62,27 +49,53 @@ Graph.prototype.init = function(options) {
         .append('g')
         .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
 
+    this.params.forEach(function(graph) {
+        graph.x = d3.scale.linear().range([0, width]);
+        graph.y = d3.scale.linear().range([height, 0]);
+
+        graph.line = d3.svg.line()
+            .x(function(d) { return graph.x(d.time); })
+            .y(function(d) { return graph.y(d.close); })
+            .interpolate('basis-open');
+
+        graph.svgPath = this.svg.append('path')
+            .attr('stroke', graph.color)
+            .attr('class', 'line');
+
+    }.bind(this));
+
+    this.x = this.params[0].x;
+    this.axisX = d3.svg.axis().orient('bottom');
+    this.svgX = this.svg.append('g')
+        .attr('class', 'x axis')
+        .attr('transform', 'translate(0,' + this.height + ')');
+
 };
 
-Graph.prototype.update = function(zoom) {
+Graph.prototype.zoom = function() {
 
-    var x;
+    this.count = 25;
+    this.getStepLen = function() {
+        return 20;
+    };
+    this.scaleX();
+
+};
+
+Graph.prototype.update = function() {
 
     this.params.forEach(function(graph) {
 
-        x = graph.x;
-
         graph.x.domain(d3.extent(graph.data, function(d) { return d.time; }));
-
-        var svgPath = this.svg.append('path')
+        graph.svgPath
             .datum(graph.data)
-            .attr('stroke', graph.color)
-            .attr('class', 'line')
             .attr('d', graph.line);
 
-        // var pathLen = svgPath.node().getTotalLength();
-        var pathLen = 15000;
-        svgPath
+        // TODO: hardcode
+        // var pathLen = graph.svgPath.node().getTotalLength();
+        var totalLen = 15000,
+            pathLen = totalLen;
+        graph.svgPath
             .style('stroke-dasharray', pathLen + ' ' + pathLen)
             .style('stroke-dashoffset', pathLen);
 
@@ -90,26 +103,48 @@ Graph.prototype.update = function(zoom) {
             if (pathLen > 0) {
                 if (this._canDraw) {
                     pathLen -= this.getStepLen();
-                    svgPath.style('stroke-dashoffset', pathLen > 0 ? pathLen : 0);
+                    graph.svgPath.style('stroke-dashoffset', pathLen > 0 ? pathLen : 0);
                 }
                 graph.drawTimeout = setTimeout(drawGraph, 100);
+            }
+            if (pathLen < totalLen / 2) {
+                this.zoom();
             }
         }.bind(this);
         drawGraph();
 
     }.bind(this));
 
-    this.svg.append('g')
-        .attr('class', 'x axis')
-        .attr('transform', 'translate(0,' + this.height + ')')
-        .call(d3.svg.axis().scale(x).orient('bottom'));
+    this.updateXAxis();
+};
 
-    return;
+Graph.prototype.scaleX = function() {
 
-    this.svgX && this.svgX.remove();
-    this.svgPath && this.svgPath.remove();
-    clearTimeout(this.drawTimeout);
+    this.params.forEach(function(graph) {
 
+        var i = 0,
+            bound = graph.data[0].time * 0.9;
+
+        while (Math.abs(graph.data[i] && graph.data[i].time) > Math.abs(bound))
+            i++;
+
+        graph.data = graph.data.slice(i);
+        graph.x.domain(d3.extent(graph.data, function(d) { return d.time; }));
+        graph.svgPath
+            .datum(graph.data)
+            .attr('d', graph.line);
+
+    }.bind(this));
+
+    this.updateXAxis();
+    if (this.count--) {
+        setTimeout(this.scaleX.bind(this), 100);
+    }
+};
+
+Graph.prototype.updateXAxis = function() {
+    this.axisX.scale(this.x);
+    this.svgX.call(this.axisX);
 };
 
 Graph.prototype.toggleDrawing = function() {

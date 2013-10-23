@@ -11,11 +11,6 @@
 
             .graph {
                 font: 10px sans-serif;
-
-                display: -webkit-flex;
-                display: flex;
-                -webkit-flex-direction: column-reverse;
-                flex-direction: column-reverse;
             }
 
             .axis path,
@@ -34,30 +29,16 @@
                 stroke-width: 1.5px;
             }
 
-            label {
-                font-size: 1.5em;
-                line-height: 30px;
-            }
-
-            input {
-                width: calc(100% - 70px);
-            }
-
         </style>
     </head>
     <body>
-        <div class='graph'>
-            <button class="pause">Pause</button>
-            <label>Speed: <input type="range" class="speed" value="100" max="200"></label>
-            <!-- <label>Zoom: <input type="range" class="zoom" value="100" max="100"></label> -->
-        </div>
+        <div class='graph'></div>
         <script src="node_modules/d3/d3.js"></script>
         <script src="node_modules/lodash/lodash.js"></script>
         <script src="graph.js"></script>
         <script>
             var root = d3.select('.graph'),
-                margin = { top: 20, right: 50, bottom: 30, left: 50 },
-                speedNode = d3.select('.speed').node();
+                margin = { top: 20, right: 50, bottom: 30, left: 50 };
 
             var graph = new Graph(
                 root,
@@ -78,20 +59,9 @@
                 {
                     margin: margin,
                     width: parseInt(root.style('width')) - margin.left - margin.right,
-                    height: 500 - margin.top - margin.bottom,
-                    getStepLen: function() {
-                        return speedNode.value;
-                    }
+                    height: 500 - margin.top - margin.bottom
                 }
             );
-
-            d3.select('.pause').on('click', function() {
-                this.innerText = graph.toggleDrawing() ? 'Pause' : 'Continue';
-            });
-
-            d3.select('.zoom').on('change', _.throttle(function() {
-                graph.update(this.value / this.max);
-            }, 100));
 
         </script>
     </body>
