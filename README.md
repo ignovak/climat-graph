@@ -11,4 +11,8 @@ python -m SimpleHTTPServer
 open http://localhost:8000/graph.html
 ```
 
-You also need the `data.tsv` file with data for graph
+You also need the `temparature.tsv` and `co2.tsv` files with data for graph:
+```
+wget http://inovak.site44.com/temperature.tsv
+wget http://inovak.site44.com/co2.tsv
+```
