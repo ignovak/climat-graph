@@ -6,7 +6,6 @@
   "scripts": {
   },
   "dependencies": {
-    "lodash": "2.2.x",
     "d3": "git://github.com/mbostock/d3.git#master"
   },
   "repository": {

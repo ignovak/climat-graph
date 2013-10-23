@@ -8,7 +8,6 @@ function Graph(root, params, options) {
         return 100;
     };
     this._canDraw = true;
-    this.zoom = _.once(this.zoom);
 
     this.init(options);
 
@@ -17,14 +16,14 @@ function Graph(root, params, options) {
 
             graph.data = data;
             // TODO: hardcode
-            if (graph.source === 'data.tsv')
+            if (graph.source === 'temperature.tsv')
                 graph.data = data.filter(function(v, k) {
                     return k % 6 === 0;
                 });
 
             if (params.every(function(g) { return g.data; })) {
                 _this._buildYAxis();
-                _this.update(1);
+                _this.update();
             }
         });
     });
@@ -107,7 +106,7 @@ Graph.prototype.update = function() {
                 }
                 graph.drawTimeout = setTimeout(drawGraph, 100);
             }
-            if (pathLen < totalLen / 2) {
+            if (pathLen < totalLen / 2 && this.count === undefined) {
                 this.zoom();
             }
         }.bind(this);

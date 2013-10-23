@@ -33,8 +33,7 @@
     </head>
     <body>
         <div class='graph'></div>
-        <script src="node_modules/d3/d3.js"></script>
-        <script src="node_modules/lodash/lodash.js"></script>
+        <script src="node_modules/d3/d3.min.js"></script>
         <script src="graph.js"></script>
         <script>
             var root = d3.select('.graph'),
@@ -44,7 +43,7 @@
                 root,
                 [
                     {
-                        source: 'data.tsv',
+                        source: 'temperature.tsv',
                         text: 'Temperature delta, C',
                         color: 'steelblue',
                         orient: 'left'
