@@ -1,53 +1,60 @@
-function Graph(root, source, params) {
+function Graph(root, params, options) {
+
+    var _this = this;
 
     this.root = root;
-    this.color = params.color;
-    this.getStepLen = params.getStepLen || function() {
+    this.params = params;
+    this.getStepLen = options.getStepLen || function() {
         return 100;
     };
     this._canDraw = true;
 
-    this.init(params);
+    this.init(options);
 
-    d3.tsv(source, type, function(error, data) {
-        data.forEach(function(d) {
-            d.time = +d.time;
-            d.close = +d.close;
+    params.forEach(function(graph) {
+        d3.tsv(graph.source, type, function(error, data) {
+
+            graph.data = data;
+            if (graph.source === 'data.tsv')
+                graph.data = data.filter(function(v, k) {
+                    return k % 6 === 0;
+                });
+
+            if (params.every(function(g) { return g.data; })) {
+                _this._buildYAxis();
+                _this.update(1);
+            }
         });
-
-        this.points = data;
-
-        this._buildYAxis(data);
-        this.update(data, 1);
-    }.bind(this));
+    });
 
     function type(d) {
         d.time = +d.time;
         d.close = +d.close;
         return d;
     }
+
 }
 
-Graph.prototype.init = function(params) {
+Graph.prototype.init = function(options) {
 
-    var margin = params.margin,
-        width = params.width,
-        height = this.height = params.height,
-        x = this.x = d3.scale.linear().range([0, width]),
+    var margin = options.margin,
+        width = this.width = options.width,
+        height = this.height = options.height,
+        x,
         y = this.y = d3.scale.linear().range([height, 0]);
 
-    this.xAxis = d3.svg.axis()
-        .scale(x)
-        .orient('bottom');
+    this.params.forEach(function(graph) {
+        x = graph.x = d3.scale.linear().range([0, width]);
+        graph.y = d3.scale.linear().range([height, 0]);
 
-    this.yAxis = d3.svg.axis()
-        .scale(y)
-        .orient('left');
+        graph.line = d3.svg.line()
+            .x(function(d) { return graph.x(d.time); })
+            .y(function(d) { return graph.y(d.close); })
+            .interpolate('basis-open');
 
-    this.line = d3.svg.line()
-        .x(function(d) { return x(d.time); })
-        .y(function(d) { return y(d.close); })
-        .interpolate('basis-open');
+    });
+
+    this.xAxis = d3.svg.axis().scale(this.params[0].x).orient('bottom');
 
     this.svg = this.root.append('svg')
         .attr('width', width + margin.left + margin.right)
@@ -57,45 +64,51 @@ Graph.prototype.init = function(params) {
 
 };
 
-Graph.prototype.update = function(data, zoom) {
+Graph.prototype.update = function(zoom) {
 
-    var len = data.length,
-        factor = ~~(len * zoom / 500) || 1;
+    var x;
 
-    data = data.slice(~~(len * (1 - zoom))).filter(function(v, k) {
-        return k % factor == 0;
-    });
+    this.params.forEach(function(graph) {
 
-    this.x.domain(d3.extent(data, function(d) { return d.time; }));
+        x = graph.x;
+
+        graph.x.domain(d3.extent(graph.data, function(d) { return d.time; }));
+
+        var svgPath = this.svg.append('path')
+            .datum(graph.data)
+            .attr('stroke', graph.color)
+            .attr('class', 'line')
+            .attr('d', graph.line);
+
+        // var pathLen = svgPath.node().getTotalLength();
+        var pathLen = 15000;
+        svgPath
+            .style('stroke-dasharray', pathLen + ' ' + pathLen)
+            .style('stroke-dashoffset', pathLen);
+
+        var drawGraph = function() {
+            if (pathLen > 0) {
+                if (this._canDraw) {
+                    pathLen -= this.getStepLen();
+                    svgPath.style('stroke-dashoffset', pathLen > 0 ? pathLen : 0);
+                }
+                graph.drawTimeout = setTimeout(drawGraph, 100);
+            }
+        }.bind(this);
+        drawGraph();
+
+    }.bind(this));
+
+    this.svg.append('g')
+        .attr('class', 'x axis')
+        .attr('transform', 'translate(0,' + this.height + ')')
+        .call(d3.svg.axis().scale(x).orient('bottom'));
+
+    return;
 
     this.svgX && this.svgX.remove();
     this.svgPath && this.svgPath.remove();
     clearTimeout(this.drawTimeout);
-
-    this.svgX = this.svg.append("g")
-        .attr("class", "x axis")
-        .attr("transform", "translate(0," + this.height + ")")
-        .call(this.xAxis);
-
-    this.svgPath = this.svg.append("path")
-        .datum(data)
-        .attr('stroke', this.color)
-        .attr("class", "line")
-        .attr("d", this.line);
-
-    var pathLen = this.svgPath.node().getTotalLength();
-    this.svgPath
-        .style('stroke-dasharray', pathLen + ' ' + pathLen)
-        .style('stroke-dashoffset', pathLen);
-
-    var drawGraph = function() {
-        if (pathLen > 0) {
-            pathLen -= this.getStepLen();
-            this._canDraw && this.svgPath.style('stroke-dashoffset', pathLen > 0 ? pathLen : 0);
-            this.drawTimeout = setTimeout(drawGraph, 100);
-        }
-    }.bind(this);
-    drawGraph();
 
 };
 
@@ -108,15 +121,18 @@ Graph.prototype.destruct = function() {
     this.root.node().innerHTML = '';
 };
 
-Graph.prototype._buildYAxis = function(data) {
-    this.y.domain(d3.extent(data, function(d) { return d.close; }));
-    this.svg.append("g")
-        .attr("class", "y axis")
-        .call(this.yAxis)
-        .append("text")
-        .attr("transform", "rotate(-90)")
-        .attr("y", 6)
-        .attr("dy", ".71em")
-        .style("text-anchor", "end")
-        .text("Temperature delta, C");
+Graph.prototype._buildYAxis = function() {
+    this.params.forEach(function(graph, i) {
+        graph.y.domain(d3.extent(graph.data, function(d) { return d.close; }));
+        this.svg.append('g')
+            .attr('class', 'y axis')
+            .call(d3.svg.axis().scale(graph.y).orient(graph.orient))
+            .attr('transform', 'translate(' + this.width * i + ', 0)')
+            .append('text')
+            .attr('transform', 'rotate(-90)')
+            .attr('y', -20 * i + 6)
+            .attr('dy', '.71em')
+            .style('text-anchor', 'end')
+            .text(graph.text);
+    }.bind(this));
 };

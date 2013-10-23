@@ -49,24 +49,36 @@
         <div class='graph'>
             <button class="pause">Pause</button>
             <label>Speed: <input type="range" class="speed" value="100" max="200"></label>
-            <label>Zoom: <input type="range" class="zoom" value="100" max="100"></label>
+            <!-- <label>Zoom: <input type="range" class="zoom" value="100" max="100"></label> -->
         </div>
         <script src="node_modules/d3/d3.js"></script>
         <script src="node_modules/lodash/lodash.js"></script>
         <script src="graph.js"></script>
         <script>
             var root = d3.select('.graph'),
-                margin = { top: 20, right: 20, bottom: 30, left: 50 },
+                margin = { top: 20, right: 50, bottom: 30, left: 50 },
                 speedNode = d3.select('.speed').node();
 
             var graph = new Graph(
                 root,
-                'data.tsv',
+                [
+                    {
+                        source: 'data.tsv',
+                        text: 'Temperature delta, C',
+                        color: 'steelblue',
+                        orient: 'left'
+                    },
+                    {
+                        source: 'co2.tsv',
+                        text: 'CO2, ppmv',
+                        color: '#963',
+                        orient: 'right'
+                    }
+                ],
                 {
                     margin: margin,
                     width: parseInt(root.style('width')) - margin.left - margin.right,
                     height: 500 - margin.top - margin.bottom,
-                    color: 'steelblue',
                     getStepLen: function() {
                         return speedNode.value;
                     }
@@ -78,8 +90,9 @@
             });
 
             d3.select('.zoom').on('change', _.throttle(function() {
-                graph.update(graph.points, this.value / this.max);
+                graph.update(this.value / this.max);
             }, 100));
+
         </script>
     </body>
 </html>
